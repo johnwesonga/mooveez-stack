@@ -1,0 +1,17 @@
+# Gleam and Erlang build output
+**/build/
+*.beam
+*.ez
+erl_crash.dump
+
+# Lustre development output
+client/.lustre/
+client/dist/
+
+# Environment files and secrets
+.env
+.env.*
+.envrc
+**/.env
+**/.env.*
+**/.envrc
