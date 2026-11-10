@@ -36,6 +36,24 @@ pub fn search_with_empty_query_returns_bad_request_test() {
   assert response.status == 400
 }
 
+pub fn movie_detail_with_non_numeric_id_returns_bad_request_test() {
+  let cache_subject = start_cache()
+  let request =
+    simulate.request(Get, "/api/movie/603%3Fappend_to_response%3Dcredits")
+  let response = server.handle_request(request, cache_subject)
+
+  assert response.status == 400
+  assert simulate.read_body(response) == "Bad request: invalid movie id"
+}
+
+pub fn movie_detail_with_zero_id_returns_bad_request_test() {
+  let cache_subject = start_cache()
+  let request = simulate.request(Get, "/api/movie/0")
+  let response = server.handle_request(request, cache_subject)
+
+  assert response.status == 400
+}
+
 pub fn cached_route_passes_through_response_test() {
   let cache_subject = start_cache()
   actor.send(cache_subject, cache.Set("movie:603", 200, "{\"id\":603}"))

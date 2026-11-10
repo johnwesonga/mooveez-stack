@@ -4,6 +4,7 @@ import gleam/erlang/process
 import gleam/http/request
 import gleam/http/response
 import gleam/httpc
+import gleam/int
 import gleam/list
 import gleam/option
 import gleam/otp/actor
@@ -40,9 +41,23 @@ pub fn handle_request(
   use req <- middleware(req)
   case wisp.path_segments(req) {
     ["api", "search", "movie"] -> handle_search(req, cache_subject)
-    ["api", "movie", id_string] ->
-      proxy_tmdb("movie:" <> id_string, "/movie/" <> id_string, cache_subject)
+    ["api", "movie", id_string] -> handle_movie_detail(id_string, cache_subject)
     _ -> wisp.not_found()
+  }
+}
+
+fn handle_movie_detail(
+  id_string: String,
+  cache_subject: process.Subject(cache.CacheMessage),
+) -> Response {
+  case int.parse(id_string) {
+    Ok(id) if id > 0 ->
+      proxy_tmdb(
+        "movie:" <> int.to_string(id),
+        "/movie/" <> int.to_string(id),
+        cache_subject,
+      )
+    _ -> wisp.bad_request("invalid movie id")
   }
 }
 
@@ -56,7 +71,10 @@ pub fn middleware(
   handle_request(req)
 }
 
-fn get_param(pairs: List(#(String, String)), key: String) -> Result(String, Nil) {
+fn get_param(
+  pairs: List(#(String, String)),
+  key: String,
+) -> Result(String, Nil) {
   pairs
   |> list.find(fn(pair) { pair.0 == key })
   |> result.map(fn(pair) { pair.1 })
